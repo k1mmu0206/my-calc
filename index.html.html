@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>電商小幫手：成本與定價精算</title>
+    <style>
+        :root {
+            --bg-yellow: #FEF9E7;
+            --card-green: #E8F5E9;
+            --accent-green: #66BB6A;
+            --dark-green: #2E7D32;
+            --text-dark: #37474F;
+            --highlight-red: #D32F2F;
+        }
+
+        body {
+            background-color: var(--bg-yellow);
+            font-family: "Microsoft JhengHei", sans-serif;
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tab-bar {
+            width: 100%;
+            max-width: 650px;
+            display: flex;
+            background-color: #FFF;
+            margin-top: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #888;
+            transition: 0.3s;
+        }
+
+        .tab-btn.active {
+            background-color: var(--accent-green);
+            color: white;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .card {
+            background-color: var(--card-green);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            color: var(--dark-green);
+            border-left: 4px solid var(--accent-green);
+            padding-left: 10px;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .input-group { margin-top: 12px; }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #C8E6C9;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        /* 預覽區塊 */
+        .preview-box {
+            background-color: #FFF;
+            border: 2px dashed var(--accent-green);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .preview-title { font-size: 0.9rem; color: #666; }
+        .preview-amount { font-size: 1.5rem; color: var(--dark-green); font-weight: bold; }
+
+        button.btn-add {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--dark-green);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            margin-top: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 0 #1b4d21;
+        }
+
+        button.btn-add:active { transform: translateY(2px); box-shadow: 0 2px 0 #1b4d21; }
+
+        /* 表格樣式 */
+        .table-wrapper { overflow-x: auto; background: white; border-radius: 10px; margin-top: 15px; }
+        .cost-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .cost-table th, .cost-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        .cost-table th { background-color: #F1F8E9; white-space: nowrap; }
+
+        .btn-del { background-color: #FFCDD2; color: #C62828; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
+
+        .summary-box {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #FFF;
+            border-radius: 10px;
+            border-left: 5px solid var(--accent-green);
+        }
+
+        .highlight-red { color: var(--highlight-red); font-size: 1.4rem; font-weight: bold; }
+        .hint { font-size: 0.75rem; color: #777; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="showPage('calc-page', this)">試算工具</button>
+        <button class="tab-btn" onclick="showPage('list-page', this)">成本與紀錄</button>
+    </div>
+
+    <div class="container">
+        
+        <!-- 分頁 1：試算工具 -->
+        <div id="calc-page" class="page active">
+            <div class="card">
+                <h2>🔍 手續費率試算</h2>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>原售價</label>
+                        <input type="number" id="f1_sale" oninput="calcRate()">
+                    </div>
+                    <div class="input-group">
+                        <label>被扣手續費金額</label>
+                        <input type="number" id="f1_fee" oninput="calcRate()">
+                    </div>
+                </div>
+                <div class="summary-box">
+                    <div style="display:flex; justify-content: space-between;">
+                        <span>換算費率：</span>
+                        <span style="color:var(--dark-green); font-weight:bold;"><span id="res1_rate">0</span> %</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📈 定價計算 (目標獲利)</h2>
+                <div class="input-group">
+                    <label>總成本 (可參考紀錄清單)</label>
+                    <input type="number" id="f2_cost" placeholder="輸入總成本" oninput="calcTarget()">
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>預計獲利 (NT$)</label>
+                        <input type="number" id="f2_profit" oninput="calcTarget()">
+                    </div>
+                    <div class="input-group">
+                        <label>手續費 (%)</label>
+                        <input type="number" id="f2_rate" oninput="calcTarget()">
+                    </div>
+                </div>
+                <div class="summary-box">
+                    <div style="display:flex; justify-content: space-between; align-items:center;">
+                        <span>建議最低售價：</span>
+                        <span class="highlight-red">$<span id="res2_price">0</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分頁 2：成本紀錄清單 -->
+        <div id="list-page" class="page">
+            <div class="card">
+                <h2>📝 填寫成本紀錄</h2>
+                <div class="input-group">
+                    <label>商品名稱</label>
+                    <input type="text" id="item_name" placeholder="">
+                </div>
+                
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>商品成本 (NT$)</label>
+                        <input type="number" id="item_base_cost" oninput="updatePreview()">
+                    </div>
+                    <div class="input-group">
+                        <label>重量 (kg)</label>
+                        <input type="number" id="item_weight" step="0.1" oninput="updatePreview()">
+                        <div class="hint">*運費 35元/kg</div>
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>其他 (自填項目)</label>
+                        <input type="text" id="item_other_name" placeholder="如：包材費">
+                    </div>
+                    <div class="input-group">
+                        <label>金額</label>
+                        <input type="number" id="item_other_amt" oninput="updatePreview()">
+                    </div>
+                </div>
+
+                <!-- 存檔前的總金額預覽 -->
+                <div class="preview-box">
+                    <div class="preview-title">此項目預計總成本</div>
+                    <div class="preview-amount">$ <span id="form_preview_total">0</span></div>
+                </div>
+
+                <button class="btn-add" onclick="addCostRecord()">新增並存檔這筆紀錄</button>
+            </div>
+
+            <div class="card" style="background-color: transparent; padding: 0;">
+                <div class="table-wrapper">
+                    <table class="cost-table">
+                        <thead>
+                            <tr>
+                                <th>名稱</th>
+                                <th>成本</th>
+                                <th>重量費</th>
+                                <th>其他</th>
+                                <th><b>總計</b></th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="costListBody"></tbody>
+                    </table>
+                </div>
+                <div class="summary-box">
+                    <div style="display:flex; justify-content:space-between; color:var(--dark-green); font-weight:bold;">
+                        <span>清單總計金額：</span>
+                        <span>$<span id="total_cost_sum">0</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const SHIP_RATE = 35;
+
+        function showPage(pageId, btn) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        // --- 試算工具 ---
+        function calcRate() {
+            const sale = parseFloat(document.getElementById('f1_sale').value) || 0;
+            const fee = parseFloat(document.getElementById('f1_fee').value) || 0;
+            document.getElementById('res1_rate').innerText = sale > 0 ? ((fee / sale) * 100).toFixed(2) : '0';
+        }
+
+        function calcTarget() {
+            const cost = parseFloat(document.getElementById('f2_cost').value) || 0;
+            const profit = parseFloat(document.getElementById('f2_profit').value) || 0;
+            const rate = (parseFloat(document.getElementById('f2_rate').value) || 0) / 100;
+            if (rate < 1) {
+                const res = (cost + profit) / (1 - rate);
+                document.getElementById('res2_price').innerText = Math.ceil(res).toLocaleString();
+            }
+        }
+
+        // --- 成本清單與預覽邏輯 ---
+        let costData = JSON.parse(localStorage.getItem('myBizCostsV3')) || [];
+
+        function updatePreview() {
+            const baseCost = parseFloat(document.getElementById('item_base_cost').value) || 0;
+            const weight = parseFloat(document.getElementById('item_weight').value) || 0;
+            const otherAmt = parseFloat(document.getElementById('item_other_amt').value) || 0;
+            
+            const total = baseCost + (weight * SHIP_RATE) + otherAmt;
+            document.getElementById('form_preview_total').innerText = Math.round(total).toLocaleString();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('costListBody');
+            tbody.innerHTML = '';
+            let totalSum = 0;
+
+            costData.forEach((item, index) => {
+                const weightFee = item.weight * SHIP_RATE;
+                const finalTotal = item.baseCost + weightFee + item.otherAmt;
+
+                const row = `<tr>
+                    <td>${item.name}</td>
+                    <td>${item.baseCost}</td>
+                    <td>${Math.round(weightFee)}</td>
+                    <td><small>${item.otherName || '無'}:</small><br>${item.otherAmt}</td>
+                    <td><b style="color:var(--dark-green)">$${Math.round(finalTotal).toLocaleString()}</b></td>
+                    <td><button class="btn-del" onclick="deleteRecord(${index})">刪</button></td>
+                </tr>`;
+                tbody.innerHTML += row;
+                totalSum += finalTotal;
+            });
+
+            document.getElementById('total_cost_sum').innerText = Math.round(totalSum).toLocaleString();
+            localStorage.setItem('myBizCostsV3', JSON.stringify(costData));
+        }
+
+        function addCostRecord() {
+            const name = document.getElementById('item_name').value;
+            const baseCost = parseFloat(document.getElementById('item_base_cost').value) || 0;
+            const weight = parseFloat(document.getElementById('item_weight').value) || 0;
+            const otherName = document.getElementById('item_other_name').value || "其他";
+            const otherAmt = parseFloat(document.getElementById('item_other_amt').value) || 0;
+            
+            if (!name) { alert('請填寫商品名稱'); return; }
+
+            costData.push({
+                name: name,
+                baseCost: baseCost,
+                weight: weight,
+                otherName: otherName,
+                otherAmt: otherAmt
+            });
+
+            // 重置表單
+            document.getElementById('item_name').value = '';
+            document.getElementById('item_base_cost').value = '';
+            document.getElementById('item_weight').value = '';
+            document.getElementById('item_other_name').value = '';
+            document.getElementById('item_other_amt').value = '';
+            document.getElementById('form_preview_total').innerText = '0';
+            
+            renderTable();
+        }
+
+        function deleteRecord(index) {
+            if (confirm('確定刪除此紀錄？')) {
+                costData.splice(index, 1);
+                renderTable();
+            }
+        }
+
+        renderTable();
+    </script>
+</body>
+</html>
