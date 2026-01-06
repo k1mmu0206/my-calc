@@ -2,424 +2,367 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>旅日助手 - 最終兼容版</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>電商小幫手：成本與定價精算 (藍色版)</title>
     <style>
         :root {
-            --bg-color: #f7f3f0;
-            --container-bg: #ffffff;
-            --coffee-dark: #5d4037;
-            --coffee-medium: #8d6e63;
-            --soft-beige: #efebe9;
-            --primary-orange: #e67e22;
-            --light-orange: #ffe0b2;
-            --delete-red: #ff4d4f;
+            --bg-light: #F4F7F9;        /* 淺藍灰背景 */
+            --card-blue: #E3F2FD;       /* 淺藍卡片 */
+            --accent-blue: #42A5F5;     /* 亮藍色 */
+            --dark-blue: #1976D2;       /* 深藍色 */
+            --text-dark: #2C3E50;
+            --highlight-red: #E53935;   /* 強調紅 */
         }
 
         body {
-            font-family: -apple-system, "Noto Sans TC", sans-serif;
-            background-color: var(--bg-color);
-            margin: 0; padding: 0;
-            display: flex; flex-direction: column; align-items: center;
+            background-color: var(--bg-light);
+            font-family: "Microsoft JhengHei", sans-serif;
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
+        /* 分頁導航欄 */
         .tab-bar {
-            width: 100%; max-width: 480px;
-            display: flex; background: var(--container-bg);
-            margin-top: 10px; border-radius: 15px 15px 0 0;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            position: sticky; top: 0; z-index: 100;
+            width: 100%;
+            max-width: 650px;
+            display: flex;
+            background-color: #FFF;
+            margin-top: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
+
         .tab-btn {
-            flex: 1; padding: 15px; border: none; background: none;
-            color: var(--coffee-medium); cursor: pointer;
-            border-bottom: 3px solid transparent; font-size: 1rem;
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #90A4AE;
+            transition: 0.3s;
         }
+
         .tab-btn.active {
-            color: var(--primary-orange); border-bottom: 3px solid var(--primary-orange); font-weight: bold;
+            background-color: var(--dark-blue);
+            color: white;
         }
 
         .container {
-            width: 100%; max-width: 480px;
-            background: var(--container-bg);
-            border-radius: 0 0 20px 20px;
-            box-shadow: 0 10px 25px rgba(93, 64, 55, 0.1);
-            padding: 20px; box-sizing: border-box; min-height: 90vh;
+            width: 100%;
+            max-width: 650px;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
-        .view-section { display: none; }
-        .view-section.active { display: block; }
+        .page { display: none; }
+        .page.active { display: block; }
 
-        /* --- 日曆修復重點：透明疊加法 --- */
-        .header-controls {
+        .card {
+            background-color: var(--card-blue);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            color: var(--dark-blue);
+            border-left: 4px solid var(--accent-blue);
+            padding-left: 10px;
+        }
+
+        .input-row {
             display: grid;
-            grid-template-columns: 50px 1fr 50px;
-            align-items: center;
-            margin-bottom: 15px;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
         }
-        .header-controls h3 { margin: 0; font-size: 1.1rem; text-align: center; color: var(--coffee-dark); }
-        
-        .date-picker-wrapper {
-            position: relative; /* 讓子元素可以絕對定位在上面 */
-            display: flex; justify-content: center; align-items: center;
-            width: 40px; height: 40px;
+
+        .input-group { margin-top: 12px; }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            color: #546E7A;
+            font-weight: bold;
         }
-        .icon-btn { font-size: 1.6rem; cursor: pointer; pointer-events: none; } /* 讓點擊穿透到 input */
-        #recordDate {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            opacity: 0; /* 變成透明 */
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #BBDEFB;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            outline-color: var(--accent-blue);
+        }
+
+        /* 預覽區塊 */
+        .preview-box {
+            background-color: #FFF;
+            border: 2px dashed var(--accent-blue);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .preview-title { font-size: 0.9rem; color: #78909C; }
+        .preview-amount { font-size: 1.5rem; color: var(--dark-blue); font-weight: bold; }
+
+        button.btn-add {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--dark-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            margin-top: 15px;
             cursor: pointer;
-            -webkit-appearance: none; /* 修復 iOS 樣式 */
+            font-weight: bold;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 0 #0D47A1;
+            transition: 0.1s;
         }
 
-        /* 螢幕顯示 */
-        .calc-display {
-            background: #fff; padding: 15px; border-radius: 15px;
-            text-align: right; margin-bottom: 15px; border: 2px solid var(--soft-beige);
-        }
-        .calc-twd { font-size: 0.9rem; color: var(--coffee-medium); margin-bottom: 4px; }
-        .calc-jpy { font-size: 2.6rem; font-weight: bold; color: var(--coffee-dark); line-height: 1.2; min-height: 2.6rem; }
-        .label { font-size: 0.7rem; color: #aaa; margin-right: 5px; }
+        button.btn-add:active { transform: translateY(2px); box-shadow: 0 2px 0 #0D47A1; }
 
-        /* 計算機鍵盤 */
-        .numpad {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;
-        }
-        .numpad button {
-            padding: 18px 0; border: none; border-radius: 12px;
-            display: flex; justify-content: center; align-items: center;
-            cursor: pointer;
-        }
-        .numpad button:active { opacity: 0.6; }
+        /* 表格樣式 */
+        .table-wrapper { overflow-x: auto; background: white; border-radius: 10px; margin-top: 15px; }
+        .cost-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .cost-table th, .cost-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ECEFF1; }
+        .cost-table th { background-color: #E1F5FE; color: #455A64; white-space: nowrap; }
 
-        .btn-num { background: var(--soft-beige); color: var(--coffee-dark); font-size: 1.5rem; font-weight: bold; }
-        .btn-func { background: #e7e0da; color: var(--coffee-medium); font-size: 1rem; font-weight: bold; }
-        .btn-op { background: var(--light-orange); color: var(--primary-orange); font-size: 1.3rem; font-weight: bold; }
-        .btn-clear { color: var(--delete-red) !important; background: #ffebeb !important; }
-
-        /* 類別與存檔 */
-        .category-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;
-        }
-        .cat-btn {
-            padding: 12px 5px; border: 1px solid var(--soft-beige);
-            border-radius: 10px; background: #fff; color: var(--coffee-medium); font-size: 0.9rem;
-        }
-        .cat-btn.active {
-            background: var(--light-orange); color: var(--primary-orange);
-            border-color: var(--primary-orange); font-weight: bold;
-        }
-        .btn-confirm {
-            width: 100%; padding: 18px; background: var(--primary-orange);
-            color: white; border: none; border-radius: 12px;
-            font-size: 1.2rem; font-weight: bold; box-shadow: 0 4px 0 #d35400; margin-bottom: 25px;
-        }
-
-        /* 紀錄清單 */
-        .record-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 0; border-bottom: 1px solid #efebe9;
-        }
-        .record-info { flex-grow: 1; }
-        .record-jpy { font-size: 1.4rem; font-weight: bold; color: var(--coffee-dark); }
-        .record-twd { font-size: 0.8rem; color: var(--coffee-medium); }
-        .btn-del-item {
-            background: none; border: 1px solid var(--delete-red); color: var(--delete-red);
-            padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer;
-        }
+        .btn-del { background-color: #FFEBEE; color: #C62828; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
 
         .summary-box {
-            background: var(--soft-beige); padding: 15px; border-radius: 15px; text-align: center; margin-bottom: 20px;
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #FFF;
+            border-radius: 10px;
+            border-left: 5px solid var(--accent-blue);
         }
-        .date-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
-        .date-tag { padding: 6px 12px; border-radius: 20px; border: 1px solid var(--coffee-medium); cursor: pointer; font-size: 0.85rem; }
-        .date-tag.selected { background: var(--primary-orange); color: white; border-color: var(--primary-orange); }
+
+        .highlight-red { color: var(--highlight-red); font-size: 1.4rem; font-weight: bold; }
+        .hint { font-size: 0.75rem; color: #90A4AE; margin-top: 4px; }
     </style>
 </head>
 <body>
 
-<div class="tab-bar">
-    <button class="tab-btn active" onclick="showView('calc', this)">日幣換算記帳</button>
-    <button class="tab-btn" onclick="showView('history', this)">支出統計</button>
-</div>
-
-<div class="container">
-    
-    <!-- 分頁一：主介面 -->
-    <div id="view-calc" class="view-section active">
-        <div class="header-controls">
-            <div class="date-picker-wrapper">
-                <span class="icon-btn">📅</span>
-                <!-- 透明的日期輸入框疊在圖示上面 -->
-                <input type="date" id="recordDate" onchange="syncDateChange()">
-            </div>
-            <h3 id="displayDateTitle">日幣換算記帳</h3>
-            <button class="icon-btn" onclick="toggleRate()" style="font-size:1.1rem; pointer-events: auto;">⚙️</button>
-        </div>
-
-        <div id="rateSection" style="display:none; margin-bottom:15px; background:var(--soft-beige); padding:10px; border-radius:10px; text-align:center;">
-            <span style="font-size:0.8rem;">匯率 1 JPY = </span>
-            <input type="number" id="exchangeRate" value="0.215" step="0.001" oninput="updateConverted()" style="width:70px;">
-        </div>
-
-        <div class="calc-display">
-            <div class="calc-twd"><span class="label">TWD</span>$ <span id="twdDisplay">0</span></div>
-            <div class="calc-jpy" id="jpyDisplay">¥ 0</div>
-        </div>
-
-        <!-- 計算機佈局優化 -->
-        <div class="numpad">
-            <button class="btn-num" onclick="pressNum('7')">7</button>
-            <button class="btn-num" onclick="pressNum('8')">8</button>
-            <button class="btn-num" onclick="pressNum('9')">9</button>
-            <button class="btn-op" onclick="pressOp('+')">+</button>
-
-            <button class="btn-num" onclick="pressNum('4')">4</button>
-            <button class="btn-num" onclick="pressNum('5')">5</button>
-            <button class="btn-num" onclick="pressNum('6')">6</button>
-            <button class="btn-op" onclick="pressOp('-')">−</button>
-
-            <button class="btn-num" onclick="pressNum('1')">1</button>
-            <button class="btn-num" onclick="pressNum('2')">2</button>
-            <button class="btn-num" onclick="pressNum('3')">3</button>
-            <button class="btn-op" onclick="pressOp('*')">×</button>
-
-            <!-- 按鈕順序：全刪除 C | 0 | 刪除 ⌫ | 000 -->
-            <button class="btn-func btn-clear" onclick="pressClear()">C</button>
-            <button class="btn-num" onclick="pressNum('0')">0</button>
-            <button class="btn-func" onclick="pressBack()">⌫</button>
-            <button class="btn-num" onclick="pressNum('000')" style="font-size:1.1rem;">000</button>
-        </div>
-
-        <div class="category-grid">
-            <button class="cat-btn" onclick="setCategory('飲食', this)">飲食</button>
-            <button class="cat-btn" onclick="setCategory('服裝', this)">服裝</button>
-            <button class="cat-btn" onclick="setCategory('用品', this)">用品</button>
-            <button class="cat-btn" onclick="setCategory('藥妝', this)">藥妝</button>
-            <button class="cat-btn" onclick="setCategory('交通', this)">交通</button>
-            <button class="cat-btn" onclick="showCustomInput(this)">＋其他</button>
-        </div>
-        <input type="text" id="customCatInput" placeholder="自定義類別名稱" style="display:none; width:100%; padding:10px; margin-bottom:15px; border-radius:10px; border:1px solid #ddd; box-sizing:border-box;">
-
-        <button class="btn-confirm" onclick="addRecord()">確認紀錄並存檔</button>
-
-        <h4 id="listTitle" style="border-left:4px solid var(--primary-orange); padding-left:10px; margin-top:10px;">今日清單</h4>
-        <div id="calcDetailList"></div>
+    <!-- 分頁選單 -->
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="showPage('calc-page', this)">試算工具</button>
+        <button class="tab-btn" onclick="showPage('list-page', this)">成本紀錄</button>
     </div>
 
-    <!-- 分頁二：統計頁 -->
-    <div id="view-history" class="view-section">
-        <h3 style="margin-top:0; text-align:center;">📊 支出統計</h3>
-        <div class="date-tags" id="historyDateTags"></div>
-        <div class="summary-box">
-            <div style="font-size: 0.9rem; color: #888;">選取日期總計</div>
-            <div style="font-size: 2rem; font-weight: bold; color: var(--primary-orange);">$ <span id="historyTotalTWD">0</span></div>
-            <div style="font-size: 0.9rem; color: #aaa;">約 ¥ <span id="historyTotalJPY">0</span></div>
-        </div>
-        <div style="max-width:280px; margin: 0 auto 20px;"><canvas id="historyChart"></canvas></div>
-        <div id="historyDetailList"></div>
-    </div>
-</div>
-
-<script>
-    let currentInput = "0";
-    let memoryValue = 0;
-    let pendingOp = null;
-    let shouldResetInput = false;
-
-    let selectedCategory = "";
-    let isCustom = false;
-    let records = JSON.parse(localStorage.getItem('jpy_trip_v9')) || [];
-    let historySelectedDates = []; 
-    let historyChart = null;
-
-    const todayStr = new Date().toLocaleDateString('en-CA');
-    document.getElementById('recordDate').value = todayStr;
-
-    window.onload = () => { syncDateChange(); };
-
-    function showView(view, btn) {
-        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('view-' + view).classList.add('active');
-        btn.classList.add('active');
-        if(view === 'history') renderHistoryTab();
-    }
-
-    // 計算機邏輯
-    function pressNum(num) {
-        if (currentInput === "0" || shouldResetInput) {
-            currentInput = num === "000" ? "0" : num;
-            shouldResetInput = false;
-        } else {
-            currentInput += num;
-        }
-        updateDisplay();
-    }
-
-    function pressOp(op) {
-        const val = parseFloat(currentInput);
-        if (pendingOp && !shouldResetInput) {
-            memoryValue = calculate(memoryValue, val, pendingOp);
-        } else {
-            memoryValue = val;
-        }
-        pendingOp = op;
-        shouldResetInput = true;
-        updateDisplay(memoryValue);
-    }
-
-    function calculate(a, b, op) {
-        if (op === '+') return a + b;
-        if (op === '-') return a - b;
-        if (op === '*') return a * b;
-        return b;
-    }
-
-    function pressClear() {
-        currentInput = "0";
-        memoryValue = 0;
-        pendingOp = null;
-        shouldResetInput = false;
-        updateDisplay();
-    }
-
-    function pressBack() {
-        if (currentInput.length > 1) currentInput = currentInput.slice(0, -1);
-        else currentInput = "0";
-        updateDisplay();
-    }
-
-    function updateDisplay(tempVal) {
-        const val = (tempVal !== undefined && shouldResetInput) ? tempVal : parseFloat(currentInput);
-        const rate = parseFloat(document.getElementById('exchangeRate').value) || 0;
-        document.getElementById('jpyDisplay').innerText = "¥ " + val.toLocaleString();
-        document.getElementById('twdDisplay').innerText = Math.round(val * rate).toLocaleString();
-    }
-
-    function updateConverted() { updateDisplay(); }
-    function toggleRate() { const s = document.getElementById('rateSection'); s.style.display = (s.style.display === 'none') ? 'block' : 'none'; }
-    
-    function syncDateChange() { 
-        const selectedDate = document.getElementById('recordDate').value;
-        const displayLabel = selectedDate === todayStr ? "今日清單" : selectedDate + " 清單";
-        document.getElementById('listTitle').innerText = displayLabel;
-        renderCalcList(); 
-    }
-
-    function setCategory(cat, btn) {
-        isCustom = false; selectedCategory = cat;
-        document.getElementById('customCatInput').style.display = 'none';
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-    }
-
-    function showCustomInput(btn) {
-        isCustom = true;
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('customCatInput').style.display = 'block';
-    }
-
-    function addRecord() {
-        let finalJPY = parseFloat(currentInput);
-        if (pendingOp && !shouldResetInput) {
-            finalJPY = calculate(memoryValue, finalJPY, pendingOp);
-        } else if (shouldResetInput) {
-            finalJPY = memoryValue;
-        }
+    <div class="container">
         
-        if (finalJPY <= 0) { alert("請輸入金額"); return; }
-        const cat = isCustom ? document.getElementById('customCatInput').value.trim() : selectedCategory;
-        if (!cat) { alert("請選擇類別"); return; }
-        
-        const rate = parseFloat(document.getElementById('exchangeRate').value) || 0;
-        const targetDate = document.getElementById('recordDate').value;
-
-        records.push({ id: Date.now(), date: targetDate, category: cat, jpy: finalJPY, twd: Math.round(finalJPY * rate) });
-        save();
-        renderCalcList();
-        pressClear();
-    }
-
-    function deleteRecord(id) {
-        if (confirm("確定要刪除此筆紀錄嗎？")) {
-            records = records.filter(r => r.id !== id);
-            save();
-            renderCalcList();
-            if (document.getElementById('view-history').classList.contains('active')) renderHistoryTab();
-        }
-    }
-
-    function renderCalcList() {
-        const targetDate = document.getElementById('recordDate').value;
-        const list = document.getElementById('calcDetailList');
-        const filtered = records.filter(r => r.date === targetDate);
-        if(filtered.length === 0) { list.innerHTML = "<p style='text-align:center;color:#aaa;font-size:0.8rem;margin-top:15px;'>尚無紀錄</p>"; return; }
-        list.innerHTML = filtered.sort((a,b)=>b.id-a.id).map(r => `
-            <div class="record-item">
-                <div class="record-info">
-                    <div><b>${r.category}</b></div>
-                    <div style="display:flex; align-items:baseline; gap:10px;">
-                        <span class="record-jpy">¥${r.jpy.toLocaleString()}</span>
-                        <span class="record-twd">$${r.twd.toLocaleString()} TWD</span>
+        <!-- 分頁 1：試算工具 -->
+        <div id="calc-page" class="page active">
+            <div class="card">
+                <h2>🔍 手續費率試算</h2>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>原售價</label>
+                        <input type="number" id="f1_sale" oninput="calcRate()">
+                    </div>
+                    <div class="input-group">
+                        <label>被扣手續費金額</label>
+                        <input type="number" id="f1_fee" oninput="calcRate()">
                     </div>
                 </div>
-                <button class="btn-del-item" onclick="deleteRecord(${r.id})">刪除</button>
+                <div class="summary-box">
+                    <div style="display:flex; justify-content: space-between;">
+                        <span>換算費率：</span>
+                        <span style="color:var(--dark-blue); font-weight:bold;"><span id="res1_rate">0</span> %</span>
+                    </div>
+                </div>
             </div>
-        `).join('');
-    }
 
-    function renderHistoryTab() {
-        const tagContainer = document.getElementById('historyDateTags');
-        const uniqueDates = [...new Set(records.map(r => r.date))].sort().reverse();
-        tagContainer.innerHTML = uniqueDates.map(d => `<div class="date-tag ${historySelectedDates.includes(d) ? 'selected' : ''}" onclick="toggleHistoryDate('${d}')">${d}</div>`).join('');
-        updateHistoryStats();
-    }
+            <div class="card">
+                <h2>📈 定價計算 (目標獲利)</h2>
+                <div class="input-group">
+                    <label>總成本 (可參考紀錄清單)</label>
+                    <input type="number" id="f2_cost" placeholder="輸入總成本" oninput="calcTarget()">
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>預計獲利 (NT$)</label>
+                        <input type="number" id="f2_profit" oninput="calcTarget()">
+                    </div>
+                    <div class="input-group">
+                        <label>手續費 (%)</label>
+                        <input type="number" id="f2_rate" oninput="calcTarget()">
+                    </div>
+                </div>
+                <div class="summary-box">
+                    <div style="display:flex; justify-content: space-between; align-items:center;">
+                        <span>建議最低售價：</span>
+                        <span class="highlight-red">$<span id="res2_price">0</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    function toggleHistoryDate(date) {
-        if(historySelectedDates.includes(date)) historySelectedDates = historySelectedDates.filter(d => d !== date);
-        else historySelectedDates.push(date);
-        renderHistoryTab();
-    }
+        <!-- 分頁 2：成本紀錄清單 -->
+        <div id="list-page" class="page">
+            <div class="card">
+                <h2>📝 填寫成本紀錄</h2>
+                <div class="input-group">
+                    <label>商品名稱</label>
+                    <input type="text" id="item_name" placeholder="">
+                </div>
+                
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>商品成本 (NT$)</label>
+                        <input type="number" id="item_base_cost" oninput="updatePreview()">
+                    </div>
+                    <div class="input-group">
+                        <label>重量 (kg)</label>
+                        <input type="number" id="item_weight" step="0.1" oninput="updatePreview()">
+                        <div class="hint">*運費 35元/kg</div>
+                    </div>
+                </div>
 
-    function updateHistoryStats() {
-        const filtered = records.filter(r => historySelectedDates.includes(r.date));
-        const list = document.getElementById('historyDetailList');
-        let totalTWD = 0, totalJPY = 0, catStats = {};
-        filtered.forEach(r => {
-            totalTWD += r.twd; totalJPY += r.jpy;
-            catStats[r.category] = (catStats[r.category] || 0) + r.twd;
-        });
-        document.getElementById('historyTotalTWD').innerText = totalTWD.toLocaleString();
-        document.getElementById('historyTotalJPY').innerText = totalJPY.toLocaleString();
-        const ctx = document.getElementById('historyChart').getContext('2d');
-        if(historyChart) historyChart.destroy();
-        if(Object.keys(catStats).length > 0) {
-            historyChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: { labels: Object.keys(catStats), datasets: [{ data: Object.values(catStats), backgroundColor: ['#e67e22', '#8d6e63', '#d7ccc8', '#ffe0b2', '#5d4037'], borderWidth: 2 }] },
-                options: { plugins: { legend: { position: 'bottom' } } }
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>其他 (自填項目)</label>
+                        <input type="text" id="item_other_name" placeholder="如：包材費">
+                    </div>
+                    <div class="input-group">
+                        <label>金額</label>
+                        <input type="number" id="item_other_amt" oninput="updatePreview()">
+                    </div>
+                </div>
+
+                <!-- 預覽 -->
+                <div class="preview-box">
+                    <div class="preview-title">此項目預計總成本預覽</div>
+                    <div class="preview-amount">$ <span id="form_preview_total">0</span></div>
+                </div>
+
+                <button class="btn-add" onclick="addCostRecord()">新增並存檔紀錄</button>
+            </div>
+
+            <div class="card" style="background-color: transparent; padding: 0;">
+                <div class="table-wrapper">
+                    <table class="cost-table">
+                        <thead>
+                            <tr>
+                                <th>名稱</th>
+                                <th>成本</th>
+                                <th>重量費</th>
+                                <th>其他</th>
+                                <th><b>總計</b></th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="costListBody"></tbody>
+                    </table>
+                </div>
+                <div class="summary-box">
+                    <div style="display:flex; justify-content:space-between; color:var(--dark-blue); font-weight:bold;">
+                        <span>清單總累計金額：</span>
+                        <span>$<span id="total_cost_sum">0</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const SHIP_RATE = 35;
+
+        function showPage(pageId, btn) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function calcRate() {
+            const sale = parseFloat(document.getElementById('f1_sale').value) || 0;
+            const fee = parseFloat(document.getElementById('f1_fee').value) || 0;
+            document.getElementById('res1_rate').innerText = sale > 0 ? ((fee / sale) * 100).toFixed(2) : '0';
+        }
+
+        function calcTarget() {
+            const cost = parseFloat(document.getElementById('f2_cost').value) || 0;
+            const profit = parseFloat(document.getElementById('f2_profit').value) || 0;
+            const rate = (parseFloat(document.getElementById('f2_rate').value) || 0) / 100;
+            if (rate < 1) {
+                const res = (cost + profit) / (1 - rate);
+                document.getElementById('res2_price').innerText = Math.ceil(res).toLocaleString();
+            }
+        }
+
+        let costData = JSON.parse(localStorage.getItem('myBizCostsV3')) || [];
+
+        function updatePreview() {
+            const baseCost = parseFloat(document.getElementById('item_base_cost').value) || 0;
+            const weight = parseFloat(document.getElementById('item_weight').value) || 0;
+            const otherAmt = parseFloat(document.getElementById('item_other_amt').value) || 0;
+            const total = baseCost + (weight * SHIP_RATE) + otherAmt;
+            document.getElementById('form_preview_total').innerText = Math.round(total).toLocaleString();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('costListBody');
+            tbody.innerHTML = '';
+            let totalSum = 0;
+
+            costData.forEach((item, index) => {
+                const weightFee = item.weight * SHIP_RATE;
+                const finalTotal = item.baseCost + weightFee + item.otherAmt;
+                const row = `<tr>
+                    <td>${item.name}</td>
+                    <td>${item.baseCost}</td>
+                    <td>${Math.round(weightFee)}</td>
+                    <td><small>${item.otherName || '無'}:</small><br>${item.otherAmt}</td>
+                    <td><b style="color:var(--dark-blue)">$${Math.round(finalTotal).toLocaleString()}</b></td>
+                    <td><button class="btn-del" onclick="deleteRecord(${index})">刪</button></td>
+                </tr>`;
+                tbody.innerHTML += row;
+                totalSum += finalTotal;
             });
+            document.getElementById('total_cost_sum').innerText = Math.round(totalSum).toLocaleString();
+            localStorage.setItem('myBizCostsV3', JSON.stringify(costData));
         }
-        list.innerHTML = filtered.sort((a,b)=>b.id-a.id).map(r => `
-            <div class="record-item">
-                <div class="record-info">
-                    <div style="font-size:0.85rem;"><b>${r.category}</b> <span style="color:#aaa;margin-left:5px;">${r.date}</span></div>
-                    <div style="display:flex; align-items:baseline; gap:10px;">
-                        <span class="record-jpy">¥${r.jpy.toLocaleString()}</span>
-                        <span class="record-twd">$${r.twd.toLocaleString()}</span>
-                    </div>
-                </div>
-                <button class="btn-del-item" onclick="deleteRecord(${r.id})">刪除</button>
-            </div>
-        `).join('');
-    }
 
-    function save() { localStorage.setItem('jpy_trip_v9', JSON.stringify(records)); }
-</script>
+        function addCostRecord() {
+            const name = document.getElementById('item_name').value;
+            const baseCost = parseFloat(document.getElementById('item_base_cost').value) || 0;
+            const weight = parseFloat(document.getElementById('item_weight').value) || 0;
+            const otherName = document.getElementById('item_other_name').value || "其他";
+            const otherAmt = parseFloat(document.getElementById('item_other_amt').value) || 0;
+            if (!name) { alert('請填寫名稱'); return; }
+            costData.push({ name, baseCost, weight, otherName, otherAmt });
+            document.getElementById('item_name').value = '';
+            document.getElementById('item_base_cost').value = '';
+            document.getElementById('item_weight').value = '';
+            document.getElementById('item_other_name').value = '';
+            document.getElementById('item_other_amt').value = '';
+            document.getElementById('form_preview_total').innerText = '0';
+            renderTable();
+        }
+
+        function deleteRecord(index) {
+            if (confirm('確定刪除？')) { costData.splice(index, 1); renderTable(); }
+        }
+
+        renderTable();
+    </script>
 </body>
 </html>
